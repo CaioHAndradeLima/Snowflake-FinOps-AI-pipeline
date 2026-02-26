@@ -1,0 +1,105 @@
+# ❄️ Snowflake Sentinel: Autonomous FinOps Lakehouse
+
+## Project Overview
+
+The Snowflake Sentinel is a production-grade FinOps Agent designed to solve the "Cloud Bill Shock" problem common in
+high-growth US startups. By utilizing a Lakehouse Architecture, it monitors Snowflake's own metadata to identify runaway
+costs, inefficient SQL patterns, and idle resources—providing AI-generated optimization suggestions natively within the
+platform.
+
+## The Problem
+
+Many organizations struggle with unpredictable Snowflake costs due to:
+
+- Sub-optimal SQL queries causing massive "disk spilling."
+- Warehouses with excessive idle time before auto-suspension.
+- Lack of visibility into which specific users/teams are burning credits.
+
+Solution: This project automates the audit process, using Generative AI to act as a virtual DBA, reducing monthly spend
+by an estimated 15–20%.
+
+## 🏗️ Architecture & Layers
+
+| Layer          | Technology              | Responsibility                                              |
+|----------------|-------------------------|-------------------------------------------------------------|
+| Data Source    | Snowflake Account Usage | Extracting QUERY_HISTORY and METERING_HISTORY.              |
+| Data Lake      | AWS S3 + Apache Iceberg | Open-table format storage to reduce vendor lock-in.         |
+| Ingestion      | Snowpark (Python)       | Extracting metadata and loading into the Iceberg Lakehouse. |
+| Transformation | dbt (Data Build Tool)   | Modeling raw logs into "Cost per Query" metrics.            |
+| Intelligence   | Snowflake Cortex        | LLM-based analysis of SQL text for optimization.            |
+| Consumption    | Streamlit in Snowflake  | An interactive "Wall of Shame" & FinOps dashboard.          |
+
+## 📁 Package Structure
+
+```plaintext
+snowflake-sentinel/
+├── infra/                  # Infrastructure as Code
+│   ├── main.tf             # AWS S3 & IAM configuration
+│   ├── snowflake_setup.tf  # Storage integrations & RBAC
+│   └── variables.tf
+├── dbt_project/            # dbt Transformation Layer
+│   ├── models/
+│   │   ├── staging/        # Cleaned metadata
+│   │   └── marts/          # Cost & Efficiency metrics
+│   └── dbt_project.yml
+├── scripts/                # Snowpark & Ingestion
+│   ├── extraction_logic.py # Python logic for S3/Iceberg sync
+│   └── cortex_analysis.py  # LLM prompting for SQL optimization
+├── streamlit/              # Native Snowflake App
+│   └── dashboard_app.py    # FinOps UI
+├── .github/workflows/      # CI/CD (GitHub Actions)
+└── README.md
+```
+
+## 🛠️ Setup & Requirements
+
+### 1. Infrastructure (Terraform)
+
+This project uses Terraform to ensure the environment is reproducible (Local → Remote).
+
+Local Setup: Install Terraform and AWS CLI. Configure your aws_access_key.
+
+Execution:
+
+```bash
+cd infra
+terraform init
+terraform apply
+```
+
+This will create the S3 Bucket for the Iceberg Lakehouse and the IAM Roles required for Snowflake to talk to AWS.
+
+### 2. Snowflake Configuration
+
+You will need a Snowflake account (Enterprise Edition or higher for Cortex/Iceberg features).
+
+- Create a Storage Integration to link Snowflake to the S3 bucket created by Terraform.
+- Enable Snowflake Cortex access for your functional role.
+
+### 3. Local Development
+
+- Python 3.10+: Required for Snowpark.
+- dbt-snowflake: For the modeling layer.
+
+```bash
+pip install snowflake-snowpark-python dbt-snowflake streamlit
+```
+
+## 🚀 The "Wow" Factor: AI Optimization
+
+The heart of this project is the Cortex Intelligence Layer. Instead of just showing a graph of "expensive queries," the
+Sentinel uses the llama3-70b model within Snowflake to analyze the query profile:
+
+```python
+# Example logic used in the project
+def get_ai_advice(query_text):
+    prompt = f"Analyze this Snowflake SQL for FinOps optimization: {query_text}"
+    return session.sql(f"SELECT SNOWFLAKE.CORTEX.COMPLETE('llama3-70b', '{prompt}')").collect()
+```
+
+## 📈 Expected Impact
+
+- Observability: 100% visibility into credit consumption.
+- Efficiency: Automated identification of the top 5% most wasteful queries.
+- Cost: Significant reduction in storage costs by utilizing Apache Iceberg for long-term log retention outside of
+  standard Snowflake tables.
