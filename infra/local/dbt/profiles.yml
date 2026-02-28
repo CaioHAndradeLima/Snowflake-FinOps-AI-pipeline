@@ -1,0 +1,27 @@
+snowflake_sentinel:
+  target: "{{ env_var('APP_ENV', 'dev') }}"
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ORGANIZATION', env_var('SNOWFLAKE_ORGANIZATION_NAME', '')) ~ ('-' if env_var('SNOWFLAKE_ORGANIZATION', env_var('SNOWFLAKE_ORGANIZATION_NAME', '')) else '') ~ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE_DEV', env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN')) }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE_DEV', env_var('SNOWFLAKE_WAREHOUSE', 'WH_SENTINEL') ~ '_DEV') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE_DEV', env_var('SNOWFLAKE_DATABASE', 'SENTINEL') ~ '_DEV') }}"
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA_DEV', env_var('SNOWFLAKE_SCHEMA', 'PUBLIC')) }}"
+      threads: 4
+      client_session_keep_alive: false
+      query_tag: "snowflake_sentinel_local_dbt_dev"
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ORGANIZATION', env_var('SNOWFLAKE_ORGANIZATION_NAME', '')) ~ ('-' if env_var('SNOWFLAKE_ORGANIZATION', env_var('SNOWFLAKE_ORGANIZATION_NAME', '')) else '') ~ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'WH_SENTINEL') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'SENTINEL') }}"
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'PUBLIC') }}"
+      threads: 4
+      client_session_keep_alive: false
+      query_tag: "snowflake_sentinel_local_dbt_prod"

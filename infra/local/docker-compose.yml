@@ -1,0 +1,36 @@
+services:
+  app:
+    build:
+      context: ./docker/app
+    working_dir: /workspace
+    env_file:
+      - .env
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ../..:/workspace
+    command: ["sleep", "infinity"]
+
+  dbt:
+    build:
+      context: ./docker/dbt
+    working_dir: /workspace
+    env_file:
+      - .env
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      DBT_PROFILES_DIR: /workspace/infra/local/dbt
+    volumes:
+      - ../..:/workspace
+    command: ["sleep", "infinity"]
+
+  terraform:
+    image: hashicorp/terraform:1.5.7
+    working_dir: /workspace/infra/remote/snowflake
+    env_file:
+      - .env
+    volumes:
+      - ../..:/workspace
+    entrypoint: ["/bin/sh", "-lc"]
+    command: ["sleep infinity"]

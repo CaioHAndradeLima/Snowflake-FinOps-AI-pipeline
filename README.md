@@ -53,6 +53,63 @@ snowflake-sentinel/
 
 ## 🛠️ Setup & Requirements
 
+## 🔧 Current Infra Structure (Local vs Remote)
+
+This project separates infrastructure into two clear scopes:
+
+- `infra/local`: local developer runtime with Docker containers.
+- `infra/remote`: remote Snowflake infrastructure provisioned with Terraform.
+
+### Local Infra (`infra/local`)
+
+Local containers are used to standardize tooling on macOS/Linux without changing your host environment:
+
+- `app`: Python runtime for Snowpark/scripts.
+- `dbt`: dbt-snowflake runtime for transformations.
+- `terraform`: Terraform CLI runtime targeting `infra/remote/snowflake`.
+
+Configuration comes from one file:
+
+- `infra/local/.env`
+
+Environment pattern:
+
+- Prod uses base names (`SNOWFLAKE_DATABASE`, `SNOWFLAKE_WAREHOUSE`, `SNOWFLAKE_ROLE`).
+- Dev uses `_DEV` names (`SNOWFLAKE_DATABASE_DEV`, `SNOWFLAKE_WAREHOUSE_DEV`, `SNOWFLAKE_ROLE_DEV`).
+- `APP_ENV=dev|prod` selects which values are used by tooling.
+
+### Remote Infra (`infra/remote`)
+
+`infra/remote/snowflake` is Terraform-based and provisions Snowflake resources (database, schemas, warehouse, grants).
+
+## ▶️ Run Local Containers
+
+From project root:
+
+```bash
+make local-up
+```
+
+Check status:
+
+```bash
+make local-ps
+```
+
+Open shells:
+
+```bash
+make local-shell-app
+make local-shell-dbt
+make local-shell-tf
+```
+
+Stop everything:
+
+```bash
+make local-down
+```
+
 ### 1. Infrastructure (Terraform)
 
 This project uses Terraform to ensure the environment is reproducible (Local → Remote).
