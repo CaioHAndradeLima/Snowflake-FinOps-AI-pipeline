@@ -41,10 +41,12 @@ default_database="SENTINEL"
 default_schema="PUBLIC"
 default_region=""
 default_app_env="dev"
+default_organization=""
 
 app_env="$(ask "APP_ENV (dev|prod)" "$default_app_env")"
 
-snowflake_account="$(ask "SNOWFLAKE_ACCOUNT (org-account or account locator)" "$default_account")"
+snowflake_organization="$(ask "SNOWFLAKE_ORGANIZATION (optional; e.g. vvyellg)" "$default_organization")"
+snowflake_account="$(ask "SNOWFLAKE_ACCOUNT (org-account or account locator; e.g. vvyellg-cr56839 or cr56839)" "$default_account")"
 snowflake_user="$(ask "SNOWFLAKE_USER" "$default_user")"
 snowflake_password="$(ask_secret "SNOWFLAKE_PASSWORD")"
 snowflake_role="$(ask "SNOWFLAKE_ROLE (prod)" "$default_role")"
@@ -63,6 +65,7 @@ cat > "$TARGET_FILE" <<EOF
 APP_ENV=$app_env
 
 SNOWFLAKE_ACCOUNT=$snowflake_account
+SNOWFLAKE_ORGANIZATION=$snowflake_organization
 SNOWFLAKE_USER=$snowflake_user
 SNOWFLAKE_PASSWORD=$snowflake_password
 SNOWFLAKE_ROLE=$snowflake_role

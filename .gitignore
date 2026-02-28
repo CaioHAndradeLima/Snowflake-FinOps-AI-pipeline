@@ -63,3 +63,5 @@ logs/
 *.pid
 *.pid.lock
 
+# Temporary local reference directory used for migration/comparison
+snowflake/

@@ -9,14 +9,22 @@ variable "environment" {
   }
 }
 
+variable "snowflake_account" {
+  type        = string
+  description = "Snowflake account identifier in host-prefix form (for example: org-account)."
+  default     = ""
+}
+
 variable "snowflake_account_name" {
   type        = string
-  description = "Snowflake account name."
+  description = "Snowflake account locator/name (without organization prefix)."
+  default     = ""
 }
 
 variable "snowflake_organization_name" {
   type        = string
   description = "Snowflake organization name."
+  default     = ""
 }
 
 variable "snowflake_user" {

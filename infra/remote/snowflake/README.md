@@ -33,3 +33,9 @@ Important:
 - `warehouse.tf`: warehouse resource.
 - `grants.tf`: baseline grants for the selected role.
 - `terraform.example.tfvars`: non-secret example values.
+
+Provider note:
+- This example uses provider auth with `account`, `user`, `password`, and `role`.
+- Input compatibility is kept for both styles:
+  - `snowflake_account = "org-account"`
+  - or `snowflake_organization_name + snowflake_account_name` (combined internally)
