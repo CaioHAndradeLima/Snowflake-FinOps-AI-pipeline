@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: env env-help tf-plan tf-apply aws-bootstrap-plan aws-bootstrap-apply local-up local-down local-ps local-logs local-shell-app local-shell-dbt local-shell-tf
+.PHONY: env env-help tf-plan tf-apply aws-bootstrap-plan aws-bootstrap-apply aws-dev-plan aws-dev-apply aws-prod-plan aws-prod-apply aws-first-time-dev aws-first-time-dev-no-snowflake local-up local-down local-ps local-logs local-shell-app local-shell-dbt local-shell-tf
 
 ENV_FILE ?= infra/local/.env
 DOCKER_COMPOSE := docker compose -f infra/local/docker-compose.yml
@@ -23,6 +23,24 @@ aws-bootstrap-plan: ## Plan AWS bootstrap roles (TerraformExecutionRoleDev/Prod)
 
 aws-bootstrap-apply: ## Apply AWS bootstrap roles (TerraformExecutionRoleDev/Prod)
 	@bash infra/local/scripts/provision_aws_bootstrap.sh --apply
+
+aws-dev-plan: ## Plan AWS dev environment resources
+	@bash infra/local/scripts/provision_aws_environment.sh dev
+
+aws-dev-apply: ## Apply AWS dev environment resources
+	@bash infra/local/scripts/provision_aws_environment.sh dev --apply
+
+aws-prod-plan: ## Plan AWS prod environment resources
+	@bash infra/local/scripts/provision_aws_environment.sh prod
+
+aws-prod-apply: ## Apply AWS prod environment resources
+	@bash infra/local/scripts/provision_aws_environment.sh prod --apply
+
+aws-first-time-dev: ## Full first-time dev setup (AWS + Snowflake trust finalization)
+	@bash infra/local/scripts/provision_first_time_dev.sh
+
+aws-first-time-dev-no-snowflake: ## First-time dev setup without Snowflake finalization
+	@bash infra/local/scripts/provision_first_time_dev.sh --skip-snowflake
 
 local-up: ## Build and start local infra containers
 	@$(DOCKER_COMPOSE) up -d --build

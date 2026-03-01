@@ -30,10 +30,11 @@ infra/
         └── bootstrap/
 ```
 
-## Target Remote Structure (Next Step)
+## Remote AWS Structure
 
 ```plaintext
 infra/remote/aws/
+├── bootstrap/
 ├── modules/
 │   ├── s3_lakehouse/
 │   ├── kms/
@@ -42,6 +43,8 @@ infra/remote/aws/
     ├── dev/
     └── prod/
 ```
+
+Bootstrap and usage details: `infra/remote/aws/README.md`
 
 ## Why Each AWS Component Is Needed
 

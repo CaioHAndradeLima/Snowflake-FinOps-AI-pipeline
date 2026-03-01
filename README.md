@@ -106,6 +106,12 @@ make aws-bootstrap-plan
 make aws-bootstrap-apply
 ```
 
+One-command first-time dev flow:
+
+```bash
+make aws-first-time-dev
+```
+
 What the bootstrap script does:
 
 - reads your current AWS CLI identity.
