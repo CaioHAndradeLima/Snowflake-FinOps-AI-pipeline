@@ -2,6 +2,7 @@
 
 This directory contains AWS IaC split into:
 
+- `state-backend/`: S3 + DynamoDB resources for remote Terraform state.
 - `bootstrap/`: creates Terraform execution roles (`Dev` and `Prod`).
 - `modules/`: shared reusable Terraform modules.
 - `environments/dev` and `environments/prod`: environment-specific stacks.
@@ -20,7 +21,33 @@ This directory contains AWS IaC split into:
 
 ## Execution Order
 
-1. Bootstrap roles (one-time):
+1. Provision remote Terraform state backend (one-time):
+
+```bash
+cp infra/remote/aws/state-backend/terraform.example.tfvars infra/remote/aws/state-backend/terraform.tfvars
+make aws-state-backend-plan
+make aws-state-backend-apply
+```
+
+Fully automated one-command version:
+
+```bash
+make bootstrap-remote-state-auto
+```
+
+2. Create backend config files and migrate state:
+
+```bash
+cp infra/remote/backends/aws-dev.example.hcl infra/remote/backends/aws-dev.hcl
+cp infra/remote/backends/aws-prod.example.hcl infra/remote/backends/aws-prod.hcl
+cp infra/remote/backends/snowflake-dev.example.hcl infra/remote/backends/snowflake-dev.hcl
+
+make init-state-aws-dev
+make init-state-aws-prod
+make init-state-snowflake-dev
+```
+
+3. Bootstrap roles (one-time):
 
 ```bash
 make aws-bootstrap-plan
@@ -40,14 +67,14 @@ This command:
 - if `snowsql` is available and `infra/local/.env` is configured, creates/reads Snowflake storage integration metadata.
 - rewrites trust vars with real Snowflake values and reapplies dev.
 
-2. Prepare tfvars for each environment:
+4. Prepare tfvars for each environment:
 
 ```bash
 cp infra/remote/aws/environments/dev/terraform.example.tfvars infra/remote/aws/environments/dev/terraform.tfvars
 cp infra/remote/aws/environments/prod/terraform.example.tfvars infra/remote/aws/environments/prod/terraform.tfvars
 ```
 
-3. Apply environments:
+5. Apply environments:
 
 ```bash
 make aws-dev-plan
@@ -89,3 +116,21 @@ For CI, use AWS OIDC role assumption and avoid static AWS keys:
 - Workflow assumes `TerraformExecutionRoleDev` for dev workflows.
 - Workflow assumes `TerraformExecutionRoleProd` for prod workflows.
 - Keep prod apply protected by manual approval branch/environment rules.
+
+Bootstrap can enable GitHub OIDC trust directly:
+
+```bash
+ENABLE_GITHUB_OIDC=true \
+GITHUB_REPOSITORY=<owner/repo> \
+GITHUB_REF_PATTERNS=refs/heads/main,refs/heads/develop \
+make aws-bootstrap-apply
+```
+
+Repository secrets expected by `.github/workflows/terraform-aws-dev.yml`:
+
+- `AWS_REGION`
+- `AWS_ROLE_ARN_DEV`
+- `TF_STATE_BUCKET`
+- `TF_LOCK_TABLE`
+- `SNOWFLAKE_TRUSTED_PRINCIPAL_ARN_DEV`
+- `SNOWFLAKE_EXTERNAL_ID_DEV`

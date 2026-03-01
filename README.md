@@ -82,6 +82,7 @@ Environment pattern:
 ### Remote Infra (`infra/remote`)
 
 `infra/remote/snowflake` is Terraform-based and provisions Snowflake resources (database, schemas, warehouse, grants).
+`infra/remote/aws` contains state backend, bootstrap roles, reusable AWS modules, and env stacks (`dev`/`prod`).
 
 ### AWS Bootstrap Execution Model (First Time)
 
@@ -111,6 +112,10 @@ One-command first-time dev flow:
 ```bash
 make aws-first-time-dev
 ```
+
+V1 infra execution order is documented in:
+
+- `infra/remote/aws/README.md`
 
 What the bootstrap script does:
 
@@ -188,6 +193,35 @@ Sentinel uses the llama3-70b model within Snowflake to analyze the query profile
 def get_ai_advice(query_text):
     prompt = f"Analyze this Snowflake SQL for FinOps optimization: {query_text}"
     return session.sql(f"SELECT SNOWFLAKE.CORTEX.COMPLETE('llama3-70b', '{prompt}')").collect()
+```
+
+## 🧱 Account Usage Export Pipeline (Snowflake -> S3 Parquet)
+
+This repository includes an automated Step 1 setup that:
+
+- creates Snowflake `STORAGE INTEGRATION`, `STAGE`, and Parquet `FILE FORMAT`.
+- creates hourly tasks to export:
+  - `SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY`
+  - `SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY`
+- writes output files to S3 under:
+  - `s3://<lakehouse-bucket>/snowflake/account_usage/<env>/...`
+
+Prerequisites:
+
+- AWS dev/prod env resources already applied (`make aws-dev-apply` or `make aws-prod-apply`).
+- `infra/local/.env` configured.
+- `snowsql` installed locally.
+
+Run setup and first export:
+
+```bash
+make account-usage-export-setup
+```
+
+Setup only (no immediate export run):
+
+```bash
+make account-usage-export-setup-only
 ```
 
 ## 📈 Expected Impact

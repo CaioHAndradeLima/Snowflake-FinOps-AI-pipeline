@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: env env-help tf-plan tf-apply aws-bootstrap-plan aws-bootstrap-apply aws-dev-plan aws-dev-apply aws-prod-plan aws-prod-apply aws-first-time-dev aws-first-time-dev-no-snowflake local-up local-down local-ps local-logs local-shell-app local-shell-dbt local-shell-tf
+.PHONY: env env-help tf-plan tf-apply account-usage-export-setup account-usage-export-setup-only step1-lakehouse-setup step1-lakehouse-setup-only bootstrap-remote-state-auto init-state-aws-dev init-state-aws-prod init-state-snowflake-dev aws-state-backend-plan aws-state-backend-apply aws-bootstrap-plan aws-bootstrap-apply aws-dev-plan aws-dev-apply aws-prod-plan aws-prod-apply aws-first-time-dev aws-first-time-dev-no-snowflake local-up local-down local-ps local-logs local-shell-app local-shell-dbt local-shell-tf
 
 ENV_FILE ?= infra/local/.env
 DOCKER_COMPOSE := docker compose -f infra/local/docker-compose.yml
@@ -17,6 +17,35 @@ tf-plan: ## Run Terraform plan for Snowflake remote using infra/local/.env
 
 tf-apply: ## Run Terraform apply for Snowflake remote using infra/local/.env
 	@bash infra/local/scripts/provision_snowflake_remote.sh --apply
+
+account-usage-export-setup: ## Create Snowflake->S3 export objects and run first export
+	@bash infra/local/scripts/setup_step1_lakehouse.sh
+
+account-usage-export-setup-only: ## Create Snowflake->S3 export objects only (no immediate export)
+	@bash infra/local/scripts/setup_step1_lakehouse.sh --setup-only
+
+# Backward-compatible aliases
+step1-lakehouse-setup: account-usage-export-setup
+
+step1-lakehouse-setup-only: account-usage-export-setup-only
+
+bootstrap-remote-state-auto: ## One-command setup for Terraform remote state backend + migration
+	@bash infra/local/scripts/bootstrap_remote_state_auto.sh
+
+init-state-aws-dev: ## Initialize remote Terraform state for AWS dev stack
+	@bash infra/local/scripts/init_remote_state.sh aws-dev
+
+init-state-aws-prod: ## Initialize remote Terraform state for AWS prod stack
+	@bash infra/local/scripts/init_remote_state.sh aws-prod
+
+init-state-snowflake-dev: ## Initialize remote Terraform state for Snowflake dev stack
+	@bash infra/local/scripts/init_remote_state.sh snowflake-dev
+
+aws-state-backend-plan: ## Plan AWS state backend resources (S3 + DynamoDB)
+	@bash infra/local/scripts/provision_aws_state_backend.sh
+
+aws-state-backend-apply: ## Apply AWS state backend resources (S3 + DynamoDB)
+	@bash infra/local/scripts/provision_aws_state_backend.sh --apply
 
 aws-bootstrap-plan: ## Plan AWS bootstrap roles (TerraformExecutionRoleDev/Prod)
 	@bash infra/local/scripts/provision_aws_bootstrap.sh

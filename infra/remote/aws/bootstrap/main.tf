@@ -1,3 +1,20 @@
+locals {
+  github_oidc_enabled = var.enable_github_oidc && var.github_repository != ""
+  github_provider_arn = local.github_oidc_enabled ? (
+    var.github_oidc_provider_arn != "" ? var.github_oidc_provider_arn : aws_iam_openid_connect_provider.github[0].arn
+  ) : ""
+  github_sub_patterns = [for ref in var.github_ref_patterns : "repo:${var.github_repository}:ref:${ref}"]
+}
+
+resource "aws_iam_openid_connect_provider" "github" {
+  count = local.github_oidc_enabled && var.github_oidc_provider_arn == "" ? 1 : 0
+
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+  tags            = var.tags
+}
+
 data "aws_iam_policy_document" "execution_role_assume" {
   statement {
     sid     = "AllowTrustedPrincipals"
@@ -7,6 +24,33 @@ data "aws_iam_policy_document" "execution_role_assume" {
     principals {
       type        = "AWS"
       identifiers = var.trusted_principal_arns
+    }
+  }
+
+  dynamic "statement" {
+    for_each = local.github_oidc_enabled ? [1] : []
+
+    content {
+      sid     = "AllowGitHubOIDC"
+      effect  = "Allow"
+      actions = ["sts:AssumeRoleWithWebIdentity"]
+
+      principals {
+        type        = "Federated"
+        identifiers = [local.github_provider_arn]
+      }
+
+      condition {
+        test     = "StringEquals"
+        variable = "token.actions.githubusercontent.com:aud"
+        values   = ["sts.amazonaws.com"]
+      }
+
+      condition {
+        test     = "StringLike"
+        variable = "token.actions.githubusercontent.com:sub"
+        values   = local.github_sub_patterns
+      }
     }
   }
 }

@@ -9,6 +9,30 @@ variable "trusted_principal_arns" {
   description = "IAM principal ARNs allowed to assume the Terraform execution roles."
 }
 
+variable "enable_github_oidc" {
+  type        = bool
+  description = "Enable GitHub OIDC trust for Terraform execution roles."
+  default     = false
+}
+
+variable "github_oidc_provider_arn" {
+  type        = string
+  description = "Existing GitHub OIDC provider ARN. If empty and enable_github_oidc=true, provider is created."
+  default     = ""
+}
+
+variable "github_repository" {
+  type        = string
+  description = "GitHub repository in owner/repo format."
+  default     = ""
+}
+
+variable "github_ref_patterns" {
+  type        = list(string)
+  description = "Allowed git refs for GitHub OIDC trust."
+  default     = ["refs/heads/main"]
+}
+
 variable "dev_role_name" {
   type        = string
   description = "Role name for Terraform dev execution."

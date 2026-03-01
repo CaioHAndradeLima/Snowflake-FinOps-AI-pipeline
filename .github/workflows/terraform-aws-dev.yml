@@ -1,0 +1,95 @@
+name: Terraform AWS Dev
+
+on:
+  pull_request:
+    paths:
+      - "infra/remote/aws/**"
+      - "infra/local/scripts/**"
+      - ".github/workflows/terraform-aws-dev.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "infra/remote/aws/**"
+      - "infra/local/scripts/**"
+      - ".github/workflows/terraform-aws-dev.yml"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Run terraform apply after plan"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  TF_WORKDIR: infra/remote/aws/environments/dev
+  TF_VAR_snowflake_trusted_principal_arn: ${{ secrets.SNOWFLAKE_TRUSTED_PRINCIPAL_ARN_DEV }}
+  TF_VAR_snowflake_external_id: ${{ secrets.SNOWFLAKE_EXTERNAL_ID_DEV }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: |
+          terraform -chdir=${TF_WORKDIR} init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=aws/dev/terraform.tfstate" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_LOCK_TABLE }}" \
+            -backend-config="encrypt=true"
+
+      - name: Terraform Validate
+        run: terraform -chdir=${TF_WORKDIR} validate
+
+      - name: Terraform Plan
+        run: terraform -chdir=${TF_WORKDIR} plan -input=false
+
+  apply:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.apply == 'true'
+    needs: plan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_DEV }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: |
+          terraform -chdir=${TF_WORKDIR} init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=aws/dev/terraform.tfstate" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_LOCK_TABLE }}" \
+            -backend-config="encrypt=true"
+
+      - name: Terraform Apply
+        run: terraform -chdir=${TF_WORKDIR} apply -auto-approve -input=false
