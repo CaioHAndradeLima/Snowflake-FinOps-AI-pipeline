@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: env env-help tf-plan tf-apply local-up local-down local-ps local-logs local-shell-app local-shell-dbt local-shell-tf
+.PHONY: env env-help tf-plan tf-apply aws-bootstrap-plan aws-bootstrap-apply local-up local-down local-ps local-logs local-shell-app local-shell-dbt local-shell-tf
 
 ENV_FILE ?= infra/local/.env
 DOCKER_COMPOSE := docker compose -f infra/local/docker-compose.yml
@@ -17,6 +17,12 @@ tf-plan: ## Run Terraform plan for Snowflake remote using infra/local/.env
 
 tf-apply: ## Run Terraform apply for Snowflake remote using infra/local/.env
 	@bash infra/local/scripts/provision_snowflake_remote.sh --apply
+
+aws-bootstrap-plan: ## Plan AWS bootstrap roles (TerraformExecutionRoleDev/Prod)
+	@bash infra/local/scripts/provision_aws_bootstrap.sh
+
+aws-bootstrap-apply: ## Apply AWS bootstrap roles (TerraformExecutionRoleDev/Prod)
+	@bash infra/local/scripts/provision_aws_bootstrap.sh --apply
 
 local-up: ## Build and start local infra containers
 	@$(DOCKER_COMPOSE) up -d --build

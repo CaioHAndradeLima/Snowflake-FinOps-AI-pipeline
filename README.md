@@ -59,6 +59,7 @@ This project separates infrastructure into two clear scopes:
 
 - `infra/local`: local developer runtime with Docker containers.
 - `infra/remote`: remote Snowflake infrastructure provisioned with Terraform.
+- Detailed infra guide: `infra/README.md`.
 
 ### Local Infra (`infra/local`)
 
@@ -81,6 +82,35 @@ Environment pattern:
 ### Remote Infra (`infra/remote`)
 
 `infra/remote/snowflake` is Terraform-based and provisions Snowflake resources (database, schemas, warehouse, grants).
+
+### AWS Bootstrap Execution Model (First Time)
+
+To create Terraform execution roles, the first run must use an AWS identity that already has permission to create IAM
+roles/policies in the target AWS account (for example, an admin SSO profile).
+
+Bootstrap creates:
+
+- `TerraformExecutionRoleDev`
+- `TerraformExecutionRoleProd`
+
+After bootstrap:
+
+- day-to-day Terraform should run by assuming these roles (instead of broad admin credentials).
+
+First-time commands:
+
+```bash
+cd /Users/caiohandradelima/PycharmProjects/snowflake-costs-performance-ai-pipeline
+aws sts get-caller-identity
+make aws-bootstrap-plan
+make aws-bootstrap-apply
+```
+
+What the bootstrap script does:
+
+- reads your current AWS CLI identity.
+- uses that identity as trusted principal for role assumption.
+- runs Terraform in `infra/remote/aws/bootstrap`.
 
 ## ▶️ Run Local Containers
 
