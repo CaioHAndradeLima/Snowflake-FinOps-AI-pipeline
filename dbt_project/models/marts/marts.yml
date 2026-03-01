@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: fct_cost_per_query
+    description: "Estimated credits per query by allocating warehouse hourly credits proportionally by query runtime."
+    columns:
+      - name: query_id
+        tests:
+          - not_null
+          - unique
+      - name: estimated_credits_for_query
+        tests:
+          - not_null
+      - name: query_time_weight_in_hour
+        tests:
+          - not_null
+  - name: fct_wasteful_warehouses
+    description: "Warehouse-hour utilization and estimated idle ratio used to identify waste."
+    columns:
+      - name: warehouse_name
+        tests:
+          - not_null
+      - name: usage_hour
+        tests:
+          - not_null
+      - name: idle_ratio
+        tests:
+          - not_null

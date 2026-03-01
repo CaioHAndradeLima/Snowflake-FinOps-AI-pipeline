@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: env env-help tf-plan tf-apply account-usage-export-setup account-usage-export-setup-only step1-lakehouse-setup step1-lakehouse-setup-only bootstrap-remote-state-auto init-state-aws-dev init-state-aws-prod init-state-snowflake-dev aws-state-backend-plan aws-state-backend-apply aws-bootstrap-plan aws-bootstrap-apply aws-dev-plan aws-dev-apply aws-prod-plan aws-prod-apply aws-first-time-dev aws-first-time-dev-no-snowflake local-up local-down local-ps local-logs local-shell-app local-shell-dbt local-shell-tf
+.PHONY: env env-help tf-plan tf-apply account-usage-export-setup account-usage-export-setup-only snowpark-ingestion-setup snowpark-ingestion-setup-only step1-lakehouse-setup step1-lakehouse-setup-only bootstrap-remote-state-auto init-state-aws-dev init-state-aws-prod init-state-snowflake-dev aws-state-backend-plan aws-state-backend-apply aws-bootstrap-plan aws-bootstrap-apply aws-dev-plan aws-dev-apply aws-prod-plan aws-prod-apply aws-first-time-dev aws-first-time-dev-no-snowflake dbt-run dbt-test local-up local-down local-ps local-logs local-shell-app local-shell-dbt local-shell-tf
 
 ENV_FILE ?= infra/local/.env
 DOCKER_COMPOSE := docker compose -f infra/local/docker-compose.yml
@@ -23,6 +23,12 @@ account-usage-export-setup: ## Create Snowflake->S3 export objects and run first
 
 account-usage-export-setup-only: ## Create Snowflake->S3 export objects only (no immediate export)
 	@bash infra/local/scripts/setup_step1_lakehouse.sh --setup-only
+
+snowpark-ingestion-setup: ## Step 2: create Snowpark ingestion procedure/task and run first ingest
+	@bash infra/local/scripts/setup_step2_snowpark_ingestion.sh
+
+snowpark-ingestion-setup-only: ## Step 2: create Snowpark ingestion procedure/task only
+	@bash infra/local/scripts/setup_step2_snowpark_ingestion.sh --setup-only
 
 # Backward-compatible aliases
 step1-lakehouse-setup: account-usage-export-setup
@@ -70,6 +76,12 @@ aws-first-time-dev: ## Full first-time dev setup (AWS + Snowflake trust finaliza
 
 aws-first-time-dev-no-snowflake: ## First-time dev setup without Snowflake finalization
 	@bash infra/local/scripts/provision_first_time_dev.sh --skip-snowflake
+
+dbt-run: ## Run dbt models in local dbt container
+	@$(DOCKER_COMPOSE) exec dbt dbt run --project-dir /workspace/dbt_project --profiles-dir /workspace/infra/local/dbt
+
+dbt-test: ## Run dbt tests in local dbt container
+	@$(DOCKER_COMPOSE) exec dbt dbt test --project-dir /workspace/dbt_project --profiles-dir /workspace/infra/local/dbt
 
 local-up: ## Build and start local infra containers
 	@$(DOCKER_COMPOSE) up -d --build

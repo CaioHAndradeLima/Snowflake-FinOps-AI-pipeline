@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: stg_query_history
+    columns:
+      - name: query_id
+        tests:
+          - not_null
+      - name: warehouse_name
+        tests:
+          - not_null
+      - name: start_time
+        tests:
+          - not_null
+      - name: total_elapsed_time_ms
+        tests:
+          - not_null
+  - name: stg_warehouse_metering
+    columns:
+      - name: warehouse_name
+        tests:
+          - not_null
+      - name: start_time
+        tests:
+          - not_null
+      - name: credits_used
+        tests:
+          - not_null

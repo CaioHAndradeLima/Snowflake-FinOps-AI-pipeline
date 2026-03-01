@@ -224,6 +224,59 @@ Setup only (no immediate export run):
 make account-usage-export-setup-only
 ```
 
+## 🐍 Step 2 Implementation: Snowpark Ingestion (S3 -> Snowflake Bronze)
+
+This repository includes an automated Step 2 setup that:
+
+- creates Snowflake raw ingestion tables in `BRONZE`.
+- creates a Python stored procedure (`LANGUAGE PYTHON` with Snowpark package) to ingest Parquet files from the external stage.
+- creates and resumes a scheduled task that calls the Snowpark procedure hourly.
+
+Why two raw tables are required:
+
+- `QUERY_HISTORY_RAW` captures query-level behavior (who ran what, runtime, bytes scanned, status).
+- `WAREHOUSE_METERING_RAW` captures warehouse-level credit usage over time.
+
+These are complementary FinOps views:
+
+- Query-level data supports "cost per query" and "expensive SQL" analysis.
+- Warehouse-level data supports "idle/wasteful warehouse" and efficiency analysis.
+
+What Step 2 does (responsibility):
+
+- moves exported Parquet files from S3 into governed Snowflake bronze tables.
+- keeps bronze ingestion repeatable and automated (task + procedure), instead of manual copy/paste SQL.
+- prepares stable source tables for Step 3 (`dbt`) modeling and tests.
+
+Run setup and first ingest:
+
+```bash
+make snowpark-ingestion-setup
+```
+
+Setup only:
+
+```bash
+make snowpark-ingestion-setup-only
+```
+
+## 🧮 Step 3 Implementation: dbt Modeling (Bronze -> CFO Metrics)
+
+The dbt project lives in `dbt_project/` and models:
+
+- `stg_query_history`
+- `stg_warehouse_metering`
+- `fct_cost_per_query`
+- `fct_wasteful_warehouses`
+
+Run models and tests:
+
+```bash
+make local-up
+make dbt-run
+make dbt-test
+```
+
 ## 📈 Expected Impact
 
 - Observability: 100% visibility into credit consumption.
